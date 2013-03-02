@@ -1,0 +1,15 @@
+{
+  "name": "peerconnection",
+  "repo": "skomski/peerconnection",
+  "description": "Simplified RTCPeerConnection for Chrome and Firefox",
+  "version": "0.0.1",
+  "keywords": [],
+  "dependencies": {
+    "component/emitter": "*"
+  },
+  "development": {},
+  "license": "MIT",
+  "scripts": [
+    "index.js"
+  ]
+}

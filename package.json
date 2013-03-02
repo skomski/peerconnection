@@ -1,0 +1,16 @@
+{
+  "name": "component-peerconnection",
+  "version": "0.0.0",
+  "description": "Simplified RTCPeerConnection for Chrome and Firefox",
+  "main": "index.js",
+  "scripts": {
+    "test": "testacular run"
+  },
+  "repository": "",
+  "keywords": [
+    "webrtc"
+  ],
+  "author": "Karl Skomski",
+  "license": "MIT",
+  "readmeFilename": "Readme.md"
+}
