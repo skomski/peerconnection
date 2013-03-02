@@ -4,15 +4,14 @@ if (!RTCPeerConnection) {
                           window.webkitRTCPeerConnection;
 }
 
-var EventEmitter
+var Emitter = require('emitter');
+var _ = require('underscore');
 
 var PeerConnection = function(options) {
+  if (!_.isObject(options))
+    throw new Error('options is not an object - new RTCSocket');
   if (!_.isString(options.stunServer))
     throw new Error('stunServer is not a string - new RTCSocket');
-  if (!_.isFunction(options.onIceCandidate))
-    throw new Error('onIceCandidate is not a function - RTCSocket.create');
-  if (!_.isFunction(options.onDataOpen))
-    throw new Error('onDataOpen is not a function - RTCSocket.create')
   if (!_.isFunction(options.onStateChange))
     throw new Error('onStateChange is not a function - RTCSocket.create');
   if (!_.isFunction(options.onMessage))
@@ -41,6 +40,9 @@ var PeerConnection = function(options) {
   this.peerConnection.onicecandidate = onIceCandidate;
   this.peerConnection.onicechange = options.onStateChange;
 }
+
+module.exports = PeerConnection;
+Emitter(PeerConnection.prototype);
 
 PeerConnection.prototype.createOffer = function(cb) {
   if (!_.isFunction(cb))
