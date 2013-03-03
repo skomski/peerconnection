@@ -85,16 +85,16 @@ PeerConnection.prototype.createOffer = function(cb) {
   });
 }
 
-PeerConnection.prototype.handleAnswer = function(description, cb) {
-  if (!description)
-    throw new Error('description is not present - PeerConnection.handleAnswer');
+PeerConnection.prototype.handleAnswer = function(description) {
+  if (!_.isObject(description))
+    throw new Error('description is not an object - PeerConnection.handleAnswer');
 
   this.peerConnection.setRemoteDescription(new RTCSessionDescription(description));
 }
 
 PeerConnection.prototype.handleOffer = function(description, cb) {
-  if (!description)
-    throw new Error('description is not present - PeerConnection.handleOffer');
+  if (!_.isObject(description))
+    throw new Error('description is not an object - PeerConnection.handleOffer');
   if (!_.isFunction(cb))
     throw new Error('cb is not a function - PeerConnection.handleOffer');
 
@@ -113,16 +113,16 @@ PeerConnection.prototype.handleOffer = function(description, cb) {
 }
 
 PeerConnection.prototype.addIceCandidate = function(candidate) {
-  if (!candidate)
-    throw new Error('candidate is not present - PeerConnection.setCandidate');
+  if (!_.isObject(candidate))
+    throw new Error('candidate is not an object - PeerConnection.addIceCandidate');
 
   this.peerConnection.addIceCandidate(new RTCIceCandidate(candidate));
 }
 
 
-PeerConnection.prototype.send = function(message) {
-  if (!_.isString(message))
-    throw new Error('message is not a string - PeerConnection.send');
+PeerConnection.prototype.send = function(data) {
+  if (!_.isString(data))
+    throw new Error('data is not present - PeerConnection.send');
 
-  this.dataChannel.send(message);
+  this.dataChannel.send(data);
 }
