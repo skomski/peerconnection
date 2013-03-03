@@ -1,92 +1,109 @@
-if (!RTCPeerConnection) {
-  var RTCPeerConnection = window.PeerConnection ||
-                          window.webkitPeerConnection00 ||
-                          window.webkitRTCPeerConnection;
-}
+var RTCPeerConnection = window.PeerConnection ||
+                        window.webkitPeerConnection00 ||
+                        window.webkitRTCPeerConnection ||
+                        window.mozRTCPeerConnection;
+
+var RTCIceCandidate = window.RTCIceCandidate ||
+                      window.mozRTCIceCandidate;
+
+var RTCSessionDescription = window.RTCSessionDescription ||
+                            window.mozRTCSessionDescription;
 
 var Emitter = require('emitter');
 var _ = require('underscore');
 
 var PeerConnection = function(options) {
   if (!_.isObject(options))
-    throw new Error('options is not an object - new RTCSocket');
-  if (!_.isString(options.stunServer))
-    throw new Error('stunServer is not a string - new RTCSocket');
-  if (!_.isFunction(options.onStateChange))
-    throw new Error('onStateChange is not a function - RTCSocket.create');
-  if (!_.isFunction(options.onMessage))
-    throw new Error('onMessage is not a function - RTCSocket.create');
+    throw new Error('options is not an object - new PeerConnection');
+  if (!_.isArray(options.iceServers))
+    throw new Error('iceServers is not an array - new PeerConnection');
 
-  this.servers = {
-    iceServers: [{ url: options.stunServer }]
+  var self = this;
+
+  this.rtcConfiguration = {
+    iceServers: options.iceServers
   }
-  this.connectionOptions = {
+
+  this.rtcOptions = {
     optional: [{ RtpDataChannels: true }]
   }
 
-  this.dataChannel = null;
-  this.onDataOpen = options.onDataOpen;
-  this.onMessage = options.onMessage;
-
+  this.dataChannel = undefined;
   this.peerConnection = new RTCPeerConnection(
-    this.servers, this.connectionOptions);
+    this.rtcConfiguration, this.rtcOptions);
 
-  var onIceCandidate = function() {
+  this.peerConnection.onstatechange = function(event) {
     if (event.candidate) {
-      options.onIceCandidate(event.candidate);
+      self.emit('StateChange', event.candidate);
     }
   }
 
-  this.peerConnection.onicecandidate = onIceCandidate;
-  this.peerConnection.onicechange = options.onStateChange;
+  this.peerConnection.onicecandidate = function(event) {
+    if (event.candidate) {
+      self.emit('IceCandidate', event.candidate);
+    }
+  }
 }
 
 module.exports = PeerConnection;
 Emitter(PeerConnection.prototype);
 
+PeerConnection.prototype._createDataChannel = function(dataChannel) {
+  var self = this;
+
+  this.dataChannel = dataChannel;
+
+  if (this.dataChannel === undefined) {
+    this.dataChannel = this.peerConnection.createDataChannel(
+      'dataChannel',
+      { reliable: false }
+    );
+  }
+
+  this.dataChannel.onmessage = function(event) {
+    self.emit('Message', event.data);
+  }
+  this.dataChannel.onopen    = function(event) {
+    self.emit('DataChannelStateChange', 'open');
+  }
+  this.dataChannel.onclose    = function(event) {
+    self.emit('DataChannelStateChange', 'close');
+  }
+}
+
 PeerConnection.prototype.createOffer = function(cb) {
   if (!_.isFunction(cb))
-    throw new Error('cb is not a function - RTCSocketConnection.createOffer');
-
-  this.dataChannel = this.peerConnection.createDataChannel(
-    'sendDataChannel',
-    { reliable: false }
-  );
-
-  this.dataChannel.onmessage = this.onMessage;
-  this.dataChannel.onopen    = this.onDataOpen;
+    throw new Error('cb is not a function - PeerConnection.createOffer');
 
   var self = this;
+
+  this._createDataChannel();
+
   this.peerConnection.createOffer(function (description) {
     self.peerConnection.setLocalDescription(description);
     cb(description);
   });
 }
 
-PeerConnection.prototype.setAnswer = function(description) {
+PeerConnection.prototype.handleAnswer = function(description, cb) {
   if (!description)
-    throw new Error('description is not present - RTCSocketConnection.setAnswer');
+    throw new Error('description is not present - PeerConnection.handleAnswer');
 
   this.peerConnection.setRemoteDescription(new RTCSessionDescription(description));
 }
 
-
-PeerConnection.prototype.setCandidate = function(candidate) {
-  if (!candidate)
-    throw new Error('candidate is not present - RTCSocketConnection.setCandidate');
-
-  this.peerConnection.addIceCandidate(new RTCIceCandidate(candidate));
-}
-
-PeerConnection.prototype.createAnswer = function(cb) {
+PeerConnection.prototype.handleOffer = function(description, cb) {
+  if (!description)
+    throw new Error('description is not present - PeerConnection.handleOffer');
   if (!_.isFunction(cb))
-    throw new Error('cb is not a function - RTCSocketConnection.createAnswer');
+    throw new Error('cb is not a function - PeerConnection.handleOffer');
+
+  this.peerConnection.setRemoteDescription(new RTCSessionDescription(description));
+
   var self = this;
 
   this.peerConnection.ondatachannel = function (event) {
-    self.dataChannel = event.channel;
-    self.dataChannel.onmessage = self.onMessage;
-    self.dataChannel.onopen    = self.onDataOpen;
+    if (event.channel) self._createDataChannel(event.channel);
   };
 
   this.peerConnection.createAnswer(function (description) {
@@ -95,9 +112,17 @@ PeerConnection.prototype.createAnswer = function(cb) {
   });
 }
 
+PeerConnection.prototype.addIceCandidate = function(candidate) {
+  if (!candidate)
+    throw new Error('candidate is not present - PeerConnection.setCandidate');
+
+  this.peerConnection.addIceCandidate(new RTCIceCandidate(candidate));
+}
+
 
 PeerConnection.prototype.send = function(message) {
   if (!_.isString(message))
-    throw new Error('message is not a string - RTCSocketConnection.send');
+    throw new Error('message is not a string - PeerConnection.send');
+
   this.dataChannel.send(message);
 }
