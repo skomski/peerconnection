@@ -20,22 +20,22 @@ var PeerConnection = function(options) {
 
   var self = this;
 
+  this.enableDataChannel = options.enableDataChannel || false;
+
   this.rtcConfiguration = {
     iceServers: options.iceServers
   }
 
-  this.rtcOptions = {
+  this.mediaConstraints = {
     optional: [{ RtpDataChannels: true }]
   }
 
   this.dataChannel = undefined;
   this.peerConnection = new RTCPeerConnection(
-    this.rtcConfiguration, this.rtcOptions);
+    this.rtcConfiguration, this.mediaConstraints);
 
   this.peerConnection.onstatechange = function(event) {
-    if (event.candidate) {
-      self.emit('StateChange', event.candidate);
-    }
+    self.emit('StateChange', event.candidate);
   }
 
   this.peerConnection.onicecandidate = function(event) {
@@ -43,10 +43,45 @@ var PeerConnection = function(options) {
       self.emit('IceCandidate', event.candidate);
     }
   }
+
+  this.peerConnection.onaddstream = function(event) {
+    if (event.stream) {
+      self.emit('AddStream', event.stream);
+    }
+  }
+
 }
 
 module.exports = PeerConnection;
 Emitter(PeerConnection.prototype);
+
+Object.defineProperty(PeerConnection.prototype, "iceState", {
+  get: function() {
+    return this.peerConnection.iceState;
+  }
+});
+
+Object.defineProperty(PeerConnection.prototype, "readyState", {
+  get: function() {
+    return this.peerConnection.readyState;
+  }
+});
+
+Object.defineProperty(PeerConnection.prototype, "localStreams", {
+  get: function() {
+    return this.peerConnection.localStreams;
+  }
+});
+
+Object.defineProperty(PeerConnection.prototype, "remoteStreams", {
+  get: function() {
+    return this.peerConnection.remoteStreams;
+  }
+});
+
+PeerConnection.prototype.getStats = function() {
+  return this.peerConnection.getStats();
+}
 
 PeerConnection.prototype._createDataChannel = function(dataChannel) {
   var self = this;
@@ -71,13 +106,41 @@ PeerConnection.prototype._createDataChannel = function(dataChannel) {
   }
 }
 
+PeerConnection.prototype.close = function() {
+  return this.peerConnection.close();
+}
+
+PeerConnection.prototype.restartIce = function() {
+  return this.peerConnection.updateIce(
+    this.rtcConfiguration,
+    this.mediaConstraints,
+    true);
+}
+
+PeerConnection.prototype.updateIceServers = function(options) {
+  this.rtcConfiguration.iceServers = options.iceServers;
+
+  return this.peerConnection.updateIce(
+    this.rtcConfiguration,
+    this.mediaConstraints,
+    options.restart || false);
+}
+
+PeerConnection.prototype.addStream = function(stream) {
+  return this.peerConnection.addStream(stream);
+}
+
+PeerConnection.prototype.removeStream = function(stream) {
+  return this.peerConnection.removeStream(stream);
+}
+
 PeerConnection.prototype.createOffer = function(cb) {
   if (!_.isFunction(cb))
     throw new Error('cb is not a function - PeerConnection.createOffer');
 
   var self = this;
 
-  this._createDataChannel();
+  if (this.enableDataChannel) this._createDataChannel();
 
   this.peerConnection.createOffer(function (description) {
     self.peerConnection.setLocalDescription(description);
@@ -102,9 +165,11 @@ PeerConnection.prototype.handleOffer = function(description, cb) {
 
   var self = this;
 
-  this.peerConnection.ondatachannel = function (event) {
-    if (event.channel) self._createDataChannel(event.channel);
-  };
+  if (this.enableDataChannel) {
+    this.peerConnection.ondatachannel = function (event) {
+      if (event.channel) self._createDataChannel(event.channel);
+    };
+  }
 
   this.peerConnection.createAnswer(function (description) {
     self.peerConnection.setLocalDescription(description);
