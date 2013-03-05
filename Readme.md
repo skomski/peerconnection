@@ -53,3 +53,5 @@ peer1.createOffer(function(description) {
 ## License
 
   MIT
+  
+![githalytics](https://cruel-carlota.pagodabox.com/fc171e3ebe1922f811b43f93bcab22ff)
