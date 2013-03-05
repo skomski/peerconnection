@@ -55,7 +55,7 @@ autoWatch = true;
 // - Safari (only Mac)
 // - PhantomJS
 // - IE (only Windows)
-browsers = ['Chrome'];
+browsers = [__dirname + '/chrome-with-fake-stream.sh'];
 
 
 // If browser does not capture in given timeout [ms], kill it

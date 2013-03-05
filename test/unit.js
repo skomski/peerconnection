@@ -126,4 +126,40 @@ describe('PeerConnection', function(){
         .toThrow(new Error('data is not present - PeerConnection.send'));
     });
   });
+
+  describe('addStream', function() {
+    var options = {};
+    options.iceServers = [{ url: 'stun:stun.google' }];
+    var connection;
+
+    beforeEach(function() {
+      connection = new PeerConnection(options);
+    });
+    afterEach(function() {
+      connection = null;
+    });
+
+    it('should throw error when stream is not present', function(){
+      expect(function() { connection.addStream(); })
+        .toThrow(new Error('stream is not an object - PeerConnection.addStream'));
+    });
+  });
+
+  describe('removeStream', function() {
+    var options = {};
+    options.iceServers = [{ url: 'stun:stun.google' }];
+    var connection;
+
+    beforeEach(function() {
+      connection = new PeerConnection(options);
+    });
+    afterEach(function() {
+      connection = null;
+    });
+
+    it('should throw error when stream is not present', function(){
+      expect(function() { connection.removeStream(); })
+        .toThrow(new Error('stream is not an object - PeerConnection.removeStream'));
+    });
+  });
 });

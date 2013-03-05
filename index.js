@@ -35,7 +35,7 @@ var PeerConnection = function(options) {
     this.rtcConfiguration, this.mediaConstraints);
 
   this.peerConnection.onstatechange = function(event) {
-    self.emit('StateChange', event.candidate);
+    self.emit('StateChange', event);
   }
 
   this.peerConnection.onicecandidate = function(event) {
@@ -50,6 +50,15 @@ var PeerConnection = function(options) {
     }
   }
 
+  this.peerConnection.onremovestream = function(event) {
+    if (event.stream) {
+      self.emit('RemoveStream', event.stream);
+    }
+  }
+
+  this.peerConnection.onicechange = function(event) {
+    self.emit('IceChange', event);
+  }
 }
 
 module.exports = PeerConnection;
@@ -76,6 +85,18 @@ Object.defineProperty(PeerConnection.prototype, "localStreams", {
 Object.defineProperty(PeerConnection.prototype, "remoteStreams", {
   get: function() {
     return this.peerConnection.remoteStreams;
+  }
+});
+
+Object.defineProperty(PeerConnection.prototype, "remoteDescription", {
+  get: function() {
+    return this.peerConnection.remoteDescription;
+  }
+});
+
+Object.defineProperty(PeerConnection.prototype, "localDescription", {
+  get: function() {
+    return this.peerConnection.localDescription;
   }
 });
 
@@ -110,14 +131,12 @@ PeerConnection.prototype.close = function() {
   return this.peerConnection.close();
 }
 
-PeerConnection.prototype.restartIce = function() {
-  return this.peerConnection.updateIce(
-    this.rtcConfiguration,
-    this.mediaConstraints,
-    true);
-}
-
 PeerConnection.prototype.updateIceServers = function(options) {
+  if (!_.isObject(options))
+    throw new Error('options is not an object - PeerConnection.updateIceServers');
+  if (!_.isArray(options.iceServers))
+    throw new Error('options.iceServers is not an array - PeerConnection.updateIceServers');
+
   this.rtcConfiguration.iceServers = options.iceServers;
 
   return this.peerConnection.updateIce(
@@ -127,10 +146,16 @@ PeerConnection.prototype.updateIceServers = function(options) {
 }
 
 PeerConnection.prototype.addStream = function(stream) {
+  if (!_.isObject(stream))
+    throw new Error('stream is not an object - PeerConnection.addStream');
+
   return this.peerConnection.addStream(stream);
 }
 
 PeerConnection.prototype.removeStream = function(stream) {
+  if (!_.isObject(stream))
+    throw new Error('stream is not an object - PeerConnection.removeStream');
+
   return this.peerConnection.removeStream(stream);
 }
 

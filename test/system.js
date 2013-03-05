@@ -1,7 +1,7 @@
 describe('PeerConnection', function() {
   it('should get the stream from the other peer', function() {
-    var peer1Message = '';
-    var peer2Message = '';
+    var peer1Stream = {};
+    var peer2Stream = {};
 
     var PeerConnection = require('peerconnection');
 
@@ -24,11 +24,11 @@ describe('PeerConnection', function() {
       });
 
       peer1.on('AddStream', function(stream) {
-        peer1Message = stream;
+        peer1Stream = stream;
       });
 
       peer2.on('AddStream', function(stream) {
-        peer2Message = stream;
+        peer2Stream = stream;
       });
 
       peer1.createOffer(function(description) {
@@ -40,11 +40,11 @@ describe('PeerConnection', function() {
       console.log(err);
     });
 
-    waits(5000);
+    waits(1000);
 
     runs(function() {
-      expect(peer1Message).toEqual('hello peer1');
-      expect(peer2Message).toEqual('hello peer2');
+      expect(peer1Stream.ended).toEqual(false);
+      expect(peer2Stream.ended).toEqual(false);
     });
   });
 
