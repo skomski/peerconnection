@@ -2,6 +2,36 @@ module.exports = function (grunt) {
   'use strict';
 
   grunt.initConfig({
+    component: {
+      build: {
+        output: './build/',
+        config: './component.json',
+        styles: false,
+        scripts: true,
+        standalone: false
+      }
+    },
+    testacularRun: {
+      unit: {
+        options: {
+          runnerPort: 9100
+        }
+      }
+    },
+    testacular: {
+      unit: {
+        options: {
+          configFile: 'testacular.conf.js',
+           keepalive: true
+        }
+      }
+    },
+    watch: {
+      src: {
+        files: ['index.js', 'test/*.js'],
+        tasks: ['jshint', 'component', 'testacularRun']
+      }
+    },
     jshint: {
       options: {
         bitwise: true,
@@ -56,6 +86,9 @@ module.exports = function (grunt) {
   });
 
   grunt.loadNpmTasks('grunt-contrib-jshint');
+  grunt.loadNpmTasks('grunt-contrib-watch');
+  grunt.loadNpmTasks('grunt-testacular');
+  grunt.loadNpmTasks('grunt-component-build');
 
   grunt.registerTask('default', ['jshint']);
 };
