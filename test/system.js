@@ -13,31 +13,32 @@ describe('PeerConnection', function() {
     var peer1 = new PeerConnection(options);
     var peer2 = new PeerConnection(options);
 
-    navigator.webkitGetUserMedia({ 'fake': true }, function (stream) {
-      peer1.addStream(stream);
-      peer2.addStream(stream);
+    navigator.webkitGetUserMedia({ 'audio': true,'fake': true },
+      function (stream) {
+        peer1.addStream(stream);
+        peer2.addStream(stream);
 
-      peer1.on('IceCandidate', function(candidate) {
-        peer2.addIceCandidate(candidate);
-      });
-
-      peer2.on('IceCandidate', function(candidate) {
-        peer1.addIceCandidate(candidate);
-      });
-
-      peer1.on('AddStream', function(stream) {
-        peer1Stream = stream;
-      });
-
-      peer2.on('AddStream', function(stream) {
-        peer2Stream = stream;
-      });
-
-      peer1.createOffer(function(description) {
-        peer2.handleOffer(description, function(description) {
-          peer1.handleAnswer(description);
+        peer1.on('IceCandidate', function(candidate) {
+          peer2.addIceCandidate(candidate);
         });
-      });
+
+        peer2.on('IceCandidate', function(candidate) {
+          peer1.addIceCandidate(candidate);
+        });
+
+        peer1.on('AddStream', function(stream) {
+          peer1Stream = stream;
+        });
+
+        peer2.on('AddStream', function(stream) {
+          peer2Stream = stream;
+        });
+
+        peer1.createOffer(function(description) {
+          peer2.handleOffer(description, function(description) {
+            peer1.handleAnswer(description);
+          });
+        });
     }, function(err) {
       throw err;
     });
