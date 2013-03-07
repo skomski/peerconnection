@@ -52,8 +52,8 @@ describe('PeerConnection', function(){
 
       runs(function() {
         expect(cb.callCount).toEqual(1);
-        expect(cb.argsForCall[0][0].type).toEqual('offer');
-        expect(cb.argsForCall[0][0].sdp).toBeTruthy();
+        expect(cb.argsForCall[0][1].type).toEqual('offer');
+        expect(cb.argsForCall[0][1].sdp).toBeTruthy();
       });
     });
   });
@@ -74,7 +74,7 @@ describe('PeerConnection', function(){
       expect(function() { connection.handleAnswer(); })
         .toThrow(
           new Error(
-            'description is not an object - PeerConnection.handleAnswer'));
+          'remoteDescription is not an object - PeerConnection.handleAnswer'));
     });
   });
 
@@ -94,7 +94,7 @@ describe('PeerConnection', function(){
       expect(function() { connection.handleOffer(); })
         .toThrow(
           new Error(
-            'description is not an object - PeerConnection.handleOffer'));
+            'remoteDescription is not an object - PeerConnection.handleOffer'));
     });
   });
 

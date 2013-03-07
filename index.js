@@ -126,8 +126,8 @@ PeerConnection.prototype._createDataChannel = function(dataChannel) {
   this.dataChannel.onopen    = function() {
     self.emit('DataChannelStateChange', 'open');
   };
-  this.dataChannel.onerror   = function() {
-    self.emit('DataChannelError', 'open');
+  this.dataChannel.onerror   = function(err) {
+    self.emit('DataChannelError', err);
   };
   this.dataChannel.onclose   = function() {
     self.emit('DataChannelStateChange', 'close');
@@ -184,47 +184,108 @@ PeerConnection.prototype.createOffer = function(cb) {
   }
 
   this.peerConnection.createOffer(function (description) {
-    self.peerConnection.setLocalDescription(description);
-    cb(description);
+    self.peerConnection.setLocalDescription(description, function() {
+      cb(null, description);
+    },
+    function(err) {
+      var error = new Error(
+        'setLocalDescription failed - PeerConnection.createOffer');
+      error.internalError = err;
+      cb(error);
+    });
+  }, function(err) {
+    var error = new Error(
+      'createOffer failed - PeerConnection.createOffer');
+    error.internalError = err;
+    cb(error);
   });
 };
 
-PeerConnection.prototype.handleAnswer = function(description) {
-  if (!_.isObject(description)) {
+PeerConnection.prototype.handleAnswer = function(remoteDescription, cb) {
+  if (!_.isObject(remoteDescription)) {
     throw new Error(
-      'description is not an object - PeerConnection.handleAnswer');
+      'remoteDescription is not an object - PeerConnection.handleAnswer');
+  }
+  if (!_.isFunction(cb)) {
+    throw new Error('cb is not a function - PeerConnection.handleAnswer');
+  }
+
+  var sessionDescription;
+  try {
+    sessionDescription = new RTCSessionDescription(remoteDescription);
+  } catch (err) {
+    var error = new Error(
+      'new RTCSessionDescription failed - PeerConnection.handleAnswer');
+    error.internalError = err;
+    cb(error);
   }
 
   this.peerConnection.setRemoteDescription(
-    new RTCSessionDescription(description));
+    sessionDescription,
+    function() {
+      cb(null);
+    }, function(err) {
+      var error = new Error(
+        'setRemoteDescription failed - PeerConnection.handleAnswer');
+      error.internalError = err;
+      cb(error);
+    });
 };
 
-PeerConnection.prototype.handleOffer = function(description, cb) {
-  if (!_.isObject(description)) {
+PeerConnection.prototype.handleOffer = function(remoteDescription, cb) {
+  if (!_.isObject(remoteDescription)) {
     throw new Error(
-      'description is not an object - PeerConnection.handleOffer');
+      'remoteDescription is not an object - PeerConnection.handleOffer');
   }
   if (!_.isFunction(cb)) {
     throw new Error('cb is not a function - PeerConnection.handleOffer');
   }
 
-  this.peerConnection.setRemoteDescription(
-    new RTCSessionDescription(description));
-
   var self = this;
 
-  if (this.enableDataChannel) {
-    this.peerConnection.ondatachannel = function (event) {
+  var sessionDescription;
+  try {
+    sessionDescription = new RTCSessionDescription(remoteDescription);
+  } catch (err) {
+    var error = new Error(
+      'new RTCSessionDescription failed - PeerConnection.handleOffer');
+    error.internalError = err;
+    cb(error);
+  }
+
+  if (self.enableDataChannel) {
+    self.peerConnection.ondatachannel = function (event) {
       if (event.channel) {
         self._createDataChannel(event.channel);
       }
     };
   }
 
-  this.peerConnection.createAnswer(function (description) {
-    self.peerConnection.setLocalDescription(description);
-    cb(description);
-  });
+  this.peerConnection.setRemoteDescription(
+    sessionDescription,
+    function() {
+      self.peerConnection.createAnswer(function (localDescription) {
+        self.peerConnection.setLocalDescription(localDescription, function() {
+          cb(null, localDescription);
+        }, function(err) {
+          var error = new Error(
+            'setLocalDescription failed - PeerConnection.handleOffer');
+          error.internalError = err;
+          cb(error);
+        });
+      }, function(err) {
+        var error = new Error(
+          'createAnswer failed - PeerConnection.handleOffer');
+        error.internalError = err;
+        cb(error);
+      });
+    },
+    function(err) {
+      var error = new Error(
+        'setRemoteDescription failed - PeerConnection.handleOffer');
+      error.internalError = err;
+      cb(error);
+    });
 };
 
 PeerConnection.prototype.addIceCandidate = function(candidate) {

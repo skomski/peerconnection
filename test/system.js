@@ -34,9 +34,13 @@ describe('PeerConnection', function() {
           peer2Stream = stream;
         });
 
-        peer1.createOffer(function(description) {
-          peer2.handleOffer(description, function(description) {
-            peer1.handleAnswer(description);
+        peer1.createOffer(function(err, description) {
+          if (err) { throw err; }
+          peer2.handleOffer(description, function(err, description) {
+            if (err) { throw err; }
+            peer1.handleAnswer(description, function(err) {
+              if (err) { throw err; }
+            });
           });
         });
     }, function(err) {
@@ -88,9 +92,13 @@ describe('PeerConnection', function() {
       if (state === 'open') { peer2.send('hello peer1'); }
     });
 
-    peer1.createOffer(function(description) {
-      peer2.handleOffer(description, function(description) {
-        peer1.handleAnswer(description);
+    peer1.createOffer(function(err, description) {
+      if (err) { throw err; }
+      peer2.handleOffer(description, function(err, description) {
+        if (err) { throw err; }
+        peer1.handleAnswer(description, function(err) {
+          if (err) { throw err; }
+        });
       });
     });
 
@@ -135,13 +143,20 @@ describe('PeerConnection', function() {
       peer2stateChangeEvents += message + ',';
     });
 
-    peer1.createOffer(function(description) {
-      peer2.handleOffer(description, function(description) {
-        peer1.handleAnswer(description);
-        setTimeout( function() {
-          peer1.close();
-          peer2.close();
-        }, 100);
+    peer1.createOffer(function(err, description) {
+      if (err) { throw err; }
+
+      peer2.handleOffer(description, function(err, description) {
+        if (err) { throw err; }
+
+        peer1.handleAnswer(description, function(err){
+          if (err) { throw err; }
+
+          setTimeout( function() {
+            peer1.close();
+            peer2.close();
+          }, 100);
+        });
       });
     });
 
@@ -187,15 +202,19 @@ describe('PeerConnection', function() {
       peer2stateChangeEvents += message + ',';
     });
 
-    peer1.createOffer(function(description) {
-      peer2.handleOffer(description, function(description) {
-        peer1.handleAnswer(description);
 
+    peer1.createOffer(function(err, description) {
+      if (err) { throw err; }
+      peer2.handleOffer(description, function(err, description) {
+        if (err) { throw err; }
+        peer1.handleAnswer(description, function(err){
+          if (err) { throw err; }
 
-        setTimeout( function() {
-          peer1.close();
-          peer2.close();
-        }, 500);
+          setTimeout( function() {
+            peer1.close();
+            peer2.close();
+          }, 500);
+        });
       });
     });
 
@@ -239,17 +258,20 @@ describe('PeerConnection', function() {
       peer2stateChangeEvents += message + ',';
     });
 
-    peer1.createOffer(function(description) {
-      peer2.handleOffer(description, function(description) {
-        peer1.handleAnswer(description);
+    peer1.createOffer(function(err, description) {
+      if (err) { throw err; }
+      peer2.handleOffer(description, function(err, description) {
+        if (err) { throw err; }
+        peer1.handleAnswer(description, function(err){
+          if (err) { throw err; }
 
-        expect(peer1.dataChannel.readyState).toEqual('connecting');
-        expect(peer2.dataChannel.readyState).toEqual('connecting');
+          expect(peer1.dataChannel.readyState).toEqual('connecting');
 
-        setTimeout( function() {
-          peer1.close();
-          peer2.close();
-        }, 500);
+          setTimeout( function() {
+            peer1.close();
+            peer2.close();
+          }, 500);
+        });
       });
     });
 
