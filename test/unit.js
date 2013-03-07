@@ -1,16 +1,18 @@
+'use strict';
+
 var PeerConnection = require('peerconnection');
 
 describe('PeerConnection', function(){
   describe('#constructor', function(){
     it('should throw error when options is not present', function(){
-      expect(function() { new PeerConnection() })
+      expect(function() { new PeerConnection(); })
         .toThrow(new Error('options is not an object - new PeerConnection'));
     });
     it('should throw error when stunServer is not present', function(){
       var options = {};
       options.iceServers = null;
 
-      expect(function() { new PeerConnection(options) })
+      expect(function() { new PeerConnection(options); })
         .toThrow(new Error('iceServers is not an array - new PeerConnection'));
     });
     it('should work if everything is present', function(){
@@ -36,7 +38,8 @@ describe('PeerConnection', function(){
 
     it('should throw error when cb is not present', function(){
       expect(function() { peerConnection.createOffer(); })
-        .toThrow(new Error('cb is not a function - PeerConnection.createOffer'));
+        .toThrow(
+          new Error('cb is not a function - PeerConnection.createOffer'));
     });
     it('should return a description when everything is present', function(){
       var cb = jasmine.createSpy();
@@ -69,7 +72,9 @@ describe('PeerConnection', function(){
 
     it('should throw error when description is not present', function(){
       expect(function() { connection.handleAnswer(); })
-        .toThrow(new Error('description is not an object - PeerConnection.handleAnswer'));
+        .toThrow(
+          new Error(
+            'description is not an object - PeerConnection.handleAnswer'));
     });
   });
 
@@ -87,7 +92,9 @@ describe('PeerConnection', function(){
 
     it('should throw error when description is not present', function(){
       expect(function() { connection.handleOffer(); })
-        .toThrow(new Error('description is not an object - PeerConnection.handleOffer'));
+        .toThrow(
+          new Error(
+            'description is not an object - PeerConnection.handleOffer'));
     });
   });
 
@@ -105,7 +112,9 @@ describe('PeerConnection', function(){
 
     it('should throw error when candidate is not present', function(){
       expect(function() { connection.addIceCandidate(); })
-        .toThrow(new Error('candidate is not an object - PeerConnection.addIceCandidate'));
+        .toThrow(
+          new Error(
+            'candidate is not an object - PeerConnection.addIceCandidate'));
     });
   });
 
@@ -141,7 +150,8 @@ describe('PeerConnection', function(){
 
     it('should throw error when stream is not present', function(){
       expect(function() { connection.addStream(); })
-        .toThrow(new Error('stream is not an object - PeerConnection.addStream'));
+        .toThrow(
+          new Error('stream is not an object - PeerConnection.addStream'));
     });
   });
 
@@ -159,7 +169,8 @@ describe('PeerConnection', function(){
 
     it('should throw error when stream is not present', function(){
       expect(function() { connection.removeStream(); })
-        .toThrow(new Error('stream is not an object - PeerConnection.removeStream'));
+        .toThrow(
+          new Error('stream is not an object - PeerConnection.removeStream'));
     });
   });
 });

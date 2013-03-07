@@ -1,4 +1,4 @@
- "use strict";
+ 'use strict';
 
 describe('PeerConnection', function() {
   it('should get the stream from the other peer', function() {
@@ -9,11 +9,11 @@ describe('PeerConnection', function() {
 
     var options = {
       iceServers: [{ url: 'stun:stun.l.google.com:19302' }]
-    }
+    };
     var peer1 = new PeerConnection(options);
     var peer2 = new PeerConnection(options);
 
-    navigator.webkitGetUserMedia({ "audio": true, "fake": true }, function (stream) {
+    navigator.webkitGetUserMedia({ 'fake': true }, function (stream) {
       peer1.addStream(stream);
       peer2.addStream(stream);
 
@@ -39,7 +39,7 @@ describe('PeerConnection', function() {
         });
       });
     }, function(err) {
-      console.log(err);
+      throw err;
     });
 
     waits(1000);
@@ -59,7 +59,7 @@ describe('PeerConnection', function() {
     var options = {
       iceServers: [{ url: 'stun:stun.l.google.com:19302' }],
       enableDataChannel: true
-    }
+    };
     var peer1 = new PeerConnection(options);
     var peer2 = new PeerConnection(options);
 
@@ -71,20 +71,20 @@ describe('PeerConnection', function() {
       peer1.addIceCandidate(candidate);
     });
 
-    peer1.on('DataMessage', function(message) {
+    peer1.on('DataChannelMessage', function(message) {
       peer1Message = message;
     });
 
-    peer2.on('DataMessage', function(message) {
+    peer2.on('DataChannelMessage', function(message) {
       peer2Message = message;
     });
 
     peer1.on('DataChannelStateChange', function(state) {
-      if (state === 'open') peer1.send('hello peer2');
+      if (state === 'open') { peer1.send('hello peer2'); }
     });
 
     peer2.on('DataChannelStateChange', function(state) {
-      if (state === 'open') peer2.send('hello peer1');
+      if (state === 'open') { peer2.send('hello peer1'); }
     });
 
     peer1.createOffer(function(description) {
@@ -111,7 +111,7 @@ describe('PeerConnection', function() {
 
     var options = {
       iceServers: [{ url: 'stun:stun.l.google.com:19302' }]
-    }
+    };
     var peer1 = new PeerConnection(options);
     var peer2 = new PeerConnection(options);
 
@@ -163,7 +163,7 @@ describe('PeerConnection', function() {
     var options = {
       iceServers: [{ url: 'stun:stun.l.google.com:19302' }],
       enableDataChannel: true
-    }
+    };
     var peer1 = new PeerConnection(options);
     var peer2 = new PeerConnection(options);
 
@@ -217,7 +217,7 @@ describe('PeerConnection', function() {
     var options = {
       iceServers: [{ url: 'stun:stun.l.google.com:19302' }],
       enableDataChannel: true
-    }
+    };
     var peer1 = new PeerConnection(options);
     var peer2 = new PeerConnection(options);
 
