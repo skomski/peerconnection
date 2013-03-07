@@ -35,7 +35,7 @@ var PeerConnection = function(options) {
     this.rtcConfiguration, this.mediaConstraints);
 
   this.peerConnection.onstatechange = function(event) {
-    self.emit('StateChange', event);
+    self.emit('StateChange', self.peerConnection.readyState);
   }
 
   this.peerConnection.onicecandidate = function(event) {
@@ -57,16 +57,16 @@ var PeerConnection = function(options) {
   }
 
   this.peerConnection.onicechange = function(event) {
-    self.emit('IceChange', event);
+    self.emit('IceChange', self.peerConnection.iceConnectionState);
   }
 }
 
 module.exports = PeerConnection;
 Emitter(PeerConnection.prototype);
 
-Object.defineProperty(PeerConnection.prototype, "iceState", {
+Object.defineProperty(PeerConnection.prototype, "iceConnectionState", {
   get: function() {
-    return this.peerConnection.iceState;
+    return this.peerConnection.iceConnectionState;
   }
 });
 
@@ -117,7 +117,7 @@ PeerConnection.prototype._createDataChannel = function(dataChannel) {
   }
 
   this.dataChannel.onmessage = function(event) {
-    self.emit('Message', event.data);
+    self.emit('DataMessage', event.data);
   }
   this.dataChannel.onopen    = function(event) {
     self.emit('DataChannelStateChange', 'open');

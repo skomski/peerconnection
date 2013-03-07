@@ -1,3 +1,5 @@
+ "use strict";
+
 describe('PeerConnection', function() {
   it('should get the stream from the other peer', function() {
     var peer1Stream = {};
@@ -69,11 +71,11 @@ describe('PeerConnection', function() {
       peer1.addIceCandidate(candidate);
     });
 
-    peer1.on('Message', function(message) {
+    peer1.on('DataMessage', function(message) {
       peer1Message = message;
     });
 
-    peer2.on('Message', function(message) {
+    peer2.on('DataMessage', function(message) {
       peer2Message = message;
     });
 
@@ -96,6 +98,165 @@ describe('PeerConnection', function() {
     runs(function() {
       expect(peer1Message).toEqual('hello peer1');
       expect(peer2Message).toEqual('hello peer2');
+    });
+  });
+
+  it('should emit all StateChange events', function() {
+    var peer1ExpectedStateChangeEvents = 'have-local-offer,stable,closed,';
+    var peer2ExpectedStateChangeEvents = 'have-remote-offer,stable,closed,';
+    var peer1stateChangeEvents = '';
+    var peer2stateChangeEvents = '';
+
+    var PeerConnection = require('peerconnection');
+
+    var options = {
+      iceServers: [{ url: 'stun:stun.l.google.com:19302' }]
+    }
+    var peer1 = new PeerConnection(options);
+    var peer2 = new PeerConnection(options);
+
+    expect(peer1.readyState).toEqual('stable');
+    expect(peer2.readyState).toEqual('stable');
+
+    peer1.on('IceCandidate', function(candidate) {
+      peer2.addIceCandidate(candidate);
+    });
+
+    peer2.on('IceCandidate', function(candidate) {
+      peer1.addIceCandidate(candidate);
+    });
+
+    peer1.on('StateChange', function(message) {
+      peer1stateChangeEvents += message + ',';
+    });
+
+    peer2.on('StateChange', function(message) {
+      peer2stateChangeEvents += message + ',';
+    });
+
+    peer1.createOffer(function(description) {
+      peer2.handleOffer(description, function(description) {
+        peer1.handleAnswer(description);
+        setTimeout( function() {
+          peer1.close();
+          peer2.close();
+        }, 100);
+      });
+    });
+
+    waits(1000);
+
+    runs(function() {
+      expect(peer1stateChangeEvents).toEqual(peer1ExpectedStateChangeEvents);
+      expect(peer2stateChangeEvents).toEqual(peer2ExpectedStateChangeEvents);
+    });
+  });
+
+  it('should emit all IceChange events', function() {
+    var peer1ExpectedStateChangeEvents = 'checking,connected,closed,';
+    var peer2ExpectedStateChangeEvents = 'checking,connected,closed,';
+    var peer1stateChangeEvents = '';
+    var peer2stateChangeEvents = '';
+
+    var PeerConnection = require('peerconnection');
+
+    var options = {
+      iceServers: [{ url: 'stun:stun.l.google.com:19302' }],
+      enableDataChannel: true
+    }
+    var peer1 = new PeerConnection(options);
+    var peer2 = new PeerConnection(options);
+
+    expect(peer1.iceConnectionState).toEqual('starting');
+    expect(peer2.iceConnectionState).toEqual('starting');
+
+    peer1.on('IceCandidate', function(candidate) {
+      peer2.addIceCandidate(candidate);
+    });
+
+    peer2.on('IceCandidate', function(candidate) {
+      peer1.addIceCandidate(candidate);
+    });
+
+    peer1.on('IceChange', function(message) {
+      peer1stateChangeEvents += message + ',';
+    });
+
+    peer2.on('IceChange', function(message) {
+      peer2stateChangeEvents += message + ',';
+    });
+
+    peer1.createOffer(function(description) {
+      peer2.handleOffer(description, function(description) {
+        peer1.handleAnswer(description);
+
+
+        setTimeout( function() {
+          peer1.close();
+          peer2.close();
+        }, 500);
+      });
+    });
+
+    waits(1000);
+
+    runs(function() {
+      expect(peer1stateChangeEvents).toEqual(peer1ExpectedStateChangeEvents);
+      expect(peer2stateChangeEvents).toEqual(peer2ExpectedStateChangeEvents);
+    });
+  });
+
+  it('should emit all DataChannelStateChange events', function() {
+    var peer1ExpectedStateChangeEvents = 'open,close,';
+    var peer2ExpectedStateChangeEvents = 'open,close,';
+    var peer1stateChangeEvents = '';
+    var peer2stateChangeEvents = '';
+
+    var PeerConnection = require('peerconnection');
+
+    var options = {
+      iceServers: [{ url: 'stun:stun.l.google.com:19302' }],
+      enableDataChannel: true
+    }
+    var peer1 = new PeerConnection(options);
+    var peer2 = new PeerConnection(options);
+
+
+    peer1.on('IceCandidate', function(candidate) {
+      peer2.addIceCandidate(candidate);
+    });
+
+    peer2.on('IceCandidate', function(candidate) {
+      peer1.addIceCandidate(candidate);
+    });
+
+    peer1.on('DataChannelStateChange', function(message) {
+      peer1stateChangeEvents += message + ',';
+    });
+
+    peer2.on('DataChannelStateChange', function(message) {
+      peer2stateChangeEvents += message + ',';
+    });
+
+    peer1.createOffer(function(description) {
+      peer2.handleOffer(description, function(description) {
+        peer1.handleAnswer(description);
+
+        expect(peer1.dataChannel.readyState).toEqual('connecting');
+        expect(peer2.dataChannel.readyState).toEqual('connecting');
+
+        setTimeout( function() {
+          peer1.close();
+          peer2.close();
+        }, 500);
+      });
+    });
+
+    waits(1000);
+
+    runs(function() {
+      expect(peer1stateChangeEvents).toEqual(peer1ExpectedStateChangeEvents);
+      expect(peer2stateChangeEvents).toEqual(peer2ExpectedStateChangeEvents);
     });
   });
 });
